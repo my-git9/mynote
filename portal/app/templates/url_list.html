@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block page_content %}
+
+<div>
+	<h4>{{ type1.typename }} 网站管理</h4>
+</div>
+<div>
+	<a href="/urladd/{{ type1.typeID }}" class="btn btn-primary">新增网站</a>
+	<a href="/main" class="btn btn-primary">返回首页</a>
+
+
+<form role="form" class="form-inline" method="POST" style="float: right">
+	<div>
+		<input type="text" name="key" class="form-control"  id="key">		
+	
+		<button type="submit" style="width: 80px;" class="btn btn-primary form-control">查询</button>
+	</div>
+</form>
+</div>
+<br>
+<table class="table table-bordered table-condensed" role="navigation">
+<div class="container-fluid">
+	<thead>
+		<tr>
+			<th>类型</th>
+			<th>环境</th>
+			<th>网站名</th>
+			<th>链接</th>
+			<th>用户</th>
+			<th>排序值</th>
+			<th>操作</th>
+		</tr>
+	</thead>
+	<tbody>
+	{% for url1 in urls %}
+	<tr>
+		<td>{{type1.typename}}</td>
+		<td>{{ url1.env }}</td>
+		<td>{{ url1.urlname }}</td>
+		<td>
+			<a href="{{ url1.url }}" target="_blank" class="btn btn-link">{{ url1.url }}</a></td>
+		<td>{{ url1.user }}</td>
+		<td>{{ url1.sortID }}</td>
+		<td>
+			<div>
+				<a href="#" onclick="showPasswd({{url1.urlID}});" class="btn btn-default">显示密码</a>
+
+				<a href="/urldelete/{{ type1.typeID }}?urlID={{ url1.urlID }}" class="btn btn-default">删除</a>
+
+				<a href="/urlupdate/{{ type1.typeID }}?urlID={{ url1.urlID }}" class="btn btn-default">修改</a>
+			</div>
+		</td>
+		</tr>
+	{% endfor %}
+	</tbody>
+</div>
+</table>
+
+{% endblock %}

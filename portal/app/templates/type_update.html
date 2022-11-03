@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block page_content %}
+<div class="page_header">
+	<h3>类型修改</h3>	
+</div>
+<div>
+	<a href="/typemanage" class="btn btn-primary">返回列表</a>
+</div>
+<form method="POST" class="form">
+	<div>
+		<label>类型ID：</label>
+		<input type="text" name="typeID" readonly="readonly" value="{{ type.typeID }}" class="form-control" id="typeID">
+	</div>
+	<div>
+		
+		<label>
+			类型名：
+		</label>
+		<input type="text" name="typename" value="{{type.typename}}" class="form-control" id="typename" required/>
+	</div>
+
+	<div>
+		<label>
+			排序值：
+		</label>
+		<input type="text" name="sortID" value="{{type.sortID}}" class="form-control"  id="sortID" required="required">		
+	</div>
+<br>
+	<div>
+		<input type="submit" style="width: 80px;" class="btn btn-primary form-control">
+	</div>
+</form>
+{% endblock %}

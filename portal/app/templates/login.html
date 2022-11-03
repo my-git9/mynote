@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block page_content %}
+<div class="page_header">
+    <h3>登录</h3>   
+</div>
+
+<form method="POST" class="form">
+    <div>
+        <label>用户名：</label>
+        <input type="text" name="username"  class="form-control" id="username" required/>
+    </div>
+    <div>
+        
+        <label>
+            密码：
+        </label>
+        <input type="password" name="password"  class="form-control" id="password" required/>
+    </div>
+
+<br>
+    <div>
+        <input type="submit" style="width: 80px;" class="btn btn-primary form-control">
+    </div>
+</form>
+{% endblock %}
+
+

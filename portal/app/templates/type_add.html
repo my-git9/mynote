@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+
+{% block page_content %}
+	<div >
+		<h3>添加类型
+	</h3>
+    </div>
+	<div>
+		 <a href="/typemanage" class="btn btn-primary">返回列表</a>
+	</div>
+	<div>
+		<form action="" method="post" class="form">
+			
+			<div>
+				<label for="typename" class="col-sm-2 control-label">类型名：</label>
+			</div>
+			<div>
+				<input type="text" required="required" name="typename" class="form-control" id="typename" required="required">
+			</div>
+			<div>
+				<label class="col-sm-2 control-label">排序值：</label>
+			</div>
+			<div>
+				<input type="text"  name="sortID" class="form-control" id="sortID" required/>
+			</div>
+			<br>
+			<div>
+		<!--		<button type="button" onclick="form.submit();" style="width: 80px;" class="btn btn-primary form-control">增加</button> -->
+			<input type="submit" style="width: 80px;" class="btn btn-primary form-control">
+			</div>		
+		</form>
+	</div>
+
+{% endblock %}

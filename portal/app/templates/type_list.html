@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block page_content %}
+
+<div class="list-group" >
+	<div class="page-header">
+		<h3>
+			内部管理
+		</h3>
+	</div>
+	<div >
+		<a href="/typeadd" class="btn btn-primary">增加类型</a>
+		<a href="/main" class="btn btn-primary">返回首页</a>
+<form role="form" class="form-inline" method="POST" style="float: right">
+	<div>
+		<input type="text" name="key" class="form-control"  id="key">		
+	
+		<button type="submit" style="width: 80px;" class="btn btn-primary form-control">查询</button>
+	</div>
+</form>
+	</div>
+
+	<table class="table table-bordered table-hover table-condensed">
+		<div>
+			<thead>
+				<tr>
+					<th >类型名称</th>
+					<th>排序值</th>
+					<th>操作</th>
+					<th>管理</th>
+				</tr>
+			</thead>
+		</div>
+		<tbody>
+			{% for type in types %}
+			<tr>
+				<td>{{ type.typename }}</td>
+				<td>{{ type.sortID }}</td>
+				<td>
+					<div>
+					<a href="/typeupdate?typeID={{type.typeID}}" class="btn btn-default">修改</a>
+						<a href="/typedelete?typeID={{type.typeID}}" class="btn btn-default">删除</a>
+					</div>
+				</td>
+				<td >
+					<a href="/urlshow/{{type.typeID}}" class="btn btn-default">管理网站</a>
+				</td>
+			</tr>
+			{% endfor %}
+		</tbody>
+	</table>
+</div>
+{% endblock %}

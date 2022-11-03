@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block page_content %}
+<div class="page-header">
+	<h3>
+	修改网站
+	</h3>
+</div>
+<div>
+	<a href="/urlshow/{{type.typeID}}" class="btn btn-primary">返回列表</a>
+</div>
+<form method="POST" class="form">
+	<div>
+		<label for="t1" class="col-sm-2 control-label">
+			网站ID：
+		</label>
+		<input type="text" name="urlID" value="{{ url.urlID }}" readonly="readonly" class="form-control" id="urlID">
+	</div>
+
+	<div>
+		<label for="t2" class="col-sm-2 control-label">类型</label>
+		<select class="form-control" id="typeID" name="typeID">
+			{% for type1 in types %}
+				<option value="{{type1.typeID}}" {% if type1.typeID == type.typeID %} selected="selected" {% endif %}>{{ type1.typename }}</option>
+			{% endfor %}
+		</select>
+	</div>
+
+	<div>
+		<label for="t2" class="col-sm-2 control-label">环境</label>
+		<select class="form-control" id="env" name="env">
+			<option value="{{url.env}}" {% if url.env == "生产环境" %} selected="selected" {% endif %}>生产环境</option>
+			<option value="{{url.env}}" {% if url.env == "UAT环境" %} selected="selected" {% endif %}>UAT环境</option>
+			<option value="{{url.env}}" {% if url.env == "测试环境" %} selected="selected" {% endif %}>测试环境</option>
+		</select>
+	</div>
+
+	<div>
+		<label for="t3" class="col-sm-2 control-label">
+			网站名：
+		</label>
+		<input type="text" name="urlname" value="{{ url.urlname }}" class="form-control" id="urlname" required/>
+	</div>
+
+	<div>
+		<label for="t4" class="col-sm-2 control-label">
+			网站链接：
+		</label>
+		<input type="text" name="url" value="{{ url.url }}" class="form-control" id="url" required/>
+	</div>
+
+	<div>
+		<label for="t5" class="col-sm-2 control-label">
+			用户名：
+		</label>
+		<input type="text" name="user" value="{{ url.user }}" class="form-control" id="user">
+	</div>
+
+	<div>
+		<label for="t6" class="col-sm-2 control-label">
+			密码：
+		</label>
+		<input type="password" name="passwd" value="{{ url.passwd }}" class="form-control" id="passwd">
+	</div>
+
+	<div>
+		<label for="t7" class="col-sm-2 control-label">
+			排序值：
+		</label>
+		<input type="text" name="sortID" value="{{ url.sortID}}" class="form-control" id="sortID" required/>
+	</div>
+	<br>
+	<div>
+		<input type="submit" style="width: 80px;" class="btn btn-primary form-control">
+	</div>
+</form>
+{% endblock %}

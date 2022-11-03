@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block page_content %}
+
+<div >
+	<a href="/typemanage" class="btn btn-primary">返回</a>
+</div>
+<div>
+	修改密码
+</div>
+<div>
+<form method="POST" class="form">
+	<div class="form-group">
+		<label>
+			原密码:
+		</label>
+		<input type="password" name="oldpwd" class="form-control" id="oldpwd">
+	</div>
+
+	<div>
+		<label>
+			新密码:
+		</label>
+		<input type="password" name="newpwd1" class="form-control" id="newpwd1">
+	</div>
+
+	<div>
+		<label>
+			确认密码:
+		</label>
+		<input type="password" name="newpwd2" class="form-control" id="newpwd2">
+	</div>
+	<br \>
+	<div>
+		<button type="button" onclick="form.submit();" class="form-control btn btn-primary">提交</button>
+	</div>
+</form>
+</div>
+
+{% endblock %}
