@@ -43,7 +43,7 @@ Apache Kafka 从一个优秀的消息引擎系统起家，逐渐演变成现在�
 
 整个 Kafka 生态圈如下图所示。值得注意的是，这张图中的外部系统只是 Kafka Connect 组件支持的一部分而已。目前还有一个可喜的趋势是使用 Kafka Connect 组件的用户越来越多，相信在未来会有越来越多的人开发自己的连接器。
 
-![image-20221118094340155](https://tva1.sinaimg.cn/large/008vxvgGgy1h891c7p1qjj31gm0laq50.jpg)
+![img](https://static001.geekbang.org/resource/image/0e/3d/0ecc8fe201c090e7ce514d719372f43d.png?wh=600*350)
 
 ## kafka术语
 
@@ -73,7 +73,7 @@ Apache Kafka 从一个优秀的消息引擎系统起家，逐渐演变成现在�
 
 **重平衡**：Rebalance。消费者组内某个消费者实例挂掉后，其他消费者实例自动重新分配订阅主题分区的过程。Rebalance 是 Kafka 消费者端实现高可用的重要手段。
 
-![image-20221118094412291](https://tva1.sinaimg.cn/large/008vxvgGgy1h891cpvm1yj31fg0ketb3.jpg)
+![image-20221118095301392](https://tva1.sinaimg.cn/large/008vxvgGgy1h891lwr56dj312q0hiwgk.jpg)
 
 串联起 Kafka 的三层消息架构：
 
@@ -194,6 +194,128 @@ Kafka 使用的方式多是顺序读写操作，一定程度上规避了机械�
 有了 240Mbps，我们就可以计算 1 小时内处理 1TB 数据所需的服务器数量了。根据这个目标，我们每秒需要处理 2336Mb(1000x1000/(60x60)=277) 的数据，除以 240，约等于 10 台服务器。如果消息还需要额外复制两份，那么总的服务器台数还要乘以 3，即 30 台。
 
 ## 参数配置
+
+### Broker 端参数
+
+Broker 端参数也被称为静态参数（Static Configs），必须在 Kafka 的配置文件 server.properties 中进行设置的参数，必须重启 Broker 进程才能令它们生效。而主题级别参数的设置则有所不同，Kafka 提供了专门的 kafka-configs 命令来修改它们。
+
+#### 磁盘
+
+- **log.dirs**：指定 Broker 需要使用的若干个文件目录路径。没有默认值的，必须人为指定。
+- **log.dir**：注意这是 dir，结尾没有 s，说明它只能表示单个路径，它是补充上一个参数用的。
+
+在线上生产环境中建议为log.dirs配置多个路径，如/home/kafka1,/home/kafka2,/home/kafka3这样。如果有条件的话你最好保证这些目录挂载到不同的物理磁盘上。这样做有两个好处：
+
+- 提升读写性能：比起单块磁盘，多块物理磁盘同时读写数据有更高的吞吐量。
+- 能够实现故障转移：即**Failover**。这是 Kafka 1.1 版本新引入的功能。在以前，只要 Kafka Broker 使用的任何一块磁盘挂掉了，整个 Broker 进程都会关闭。但是自 1.1 开始，这种情况被修正了，坏掉的磁盘上的数据会自动地转移到其他正常的磁盘上，而且 Broker 还能正常工作。这个改进正是我们舍弃 RAID 方案的基础：没有这种 Failover 的话，我们只能依靠 RAID 来提供保障。
+
+#### ZooKeeper
+
+ ZooKeeper 是一个分布式协调框架，负责协调管理并保存 Kafka 集群的所有元数据信息，比如集群都有哪些 Broker 在运行、创建了哪些 Topic，每个 Topic 都有多少分区以及这些分区的 Leader 副本都在哪些机器上等信息。
+
+Kafka 与 ZooKeeper 相关的最重要的参数当属**zookeeper.connect**。这也是一个 CSV 格式的参数，如可以指定为`zk1:2181,zk2:2181,zk3:2181`。2181 是 ZooKeeper 的默认端口。
+
+如果让多个 Kafka 集群使用同一套 ZooKeeper 集群，这时候 chroot 就派上用场了。这个 chroot 是 ZooKeeper 的概念，类似于别名。
+
+如假如2套kafka集群kafka1、kafka2接入同一套zk，zookeeper.connect参数可以这样指定：zk1:2181,zk2:2181,zk3:2181/kafka1和zk1:2181,zk2:2181,zk3:2181/kafka2。切记 chroot 只需要写一次，而且是加到最后的。
+
+#### Broker连接
+
+Broker 连接相关的，即客户端程序或其他 Broker 如何与该 Broker 进行通信的设置。有以下三个参数：
+
+- **listeners**：学名叫监听器，其实就是告诉外部连接者要通过什么协议访问指定主机名和端口开放的 Kafka 服务。
+  - 从构成上来说，它是若干个逗号分隔的三元组，每个三元组的格式为**<协议名称，主机名，端口号>**。这里的协议名称可能是标准的名字，比如 PLAINTEXT 表示明文传输、SSL 表示使用 SSL 或 TLS 加密传输等；也可能是自己定义的协议名字，比如CONTROLLER: //localhost:9092。
+  - 一旦你自己定义了协议名称，你必须还要指定**listener.security.protocol.map**参数告诉这个协议底层使用了哪种安全协议，比如指定**listener.security.protocol.map=CONTROLLER:PLAINTEXT**表示CONTROLLER这个自定义协议底层使用明文不加密传输数据。
+  - 三元组中的主机名，生产环境不建议使用ip地址，最好全部使用主机名，即**Broker 端和 Client 端应用配置中全部填写主机名**。 Broker 源代码中也使用的是主机名，如果你在某些地方使用了 IP 地址进行连接，可能会发生无法连接的问题。
+
+- **advertised.listeners**：和 listeners 相比多了个 advertised。Advertised 的含义表示宣称的、公布的，就是说这组监听器是 Broker 用于对外发布的。
+
+- **host.name/port**：列出这两个参数就是想说你把它们忘掉吧，压根不要为它们指定值，毕竟都是过期的参数了。
+
+#### Topic 管理
+
+- **auto.create.topics.enable**：是否允许自动创建 Topic。
+
+- **unclean.leader.election.enable**：是否允许 Unclean Leader 选举。
+
+  - 每个分区都有多个副本来提供高可用。在这些副本中只能有一个副本对外提供服务，即所谓的 Leader 副本。只有保存数据比较多的那些副本才有资格竞选，那些落后进度太多的副本没资格做这件事。
+
+    这个参数如果设置成 false，那么就坚持之前的原则，坚决不能让那些落后太多的副本竞选 Leader。这样做的后果是这个分区就不可用了，因为没有 Leader 了。反之如果是 true，那么 Kafka 允许你从那些“跑得慢”的副本中选一个出来当 Leader。
+
+- **auto.leader.rebalance.enable**：是否允许定期进行 Leader 选举。
+
+  - 设置它的值为 true 表示允许 Kafka 定期地对一些 Topic 分区进行 Leader 重选举，当然这个重选举不是无脑进行的，它要满足一定的条件才会发生。严格来说它与上一个参数中 Leader 选举的最大不同在于，它不是选 Leader，而是换 Leader！比如 Leader A 一直表现得很好，但若auto.leader.rebalance.enable=true，那么有可能一段时间后 Leader A 就要被强行卸任换成 Leader B。
+
+#### 数据留存
+
+- **log.retention.{hours|minutes|ms}**：这是个“三兄弟”，都是控制一条消息数据被保存多长时间。从优先级上来说 ms 设置最高、minutes 次之、hours 最低。
+- **log.retention.bytes**：这是指定 Broker 为消息保存的总磁盘容量大小，默认为 -1 则表示不限制。
+- **message.max.bytes**：控制 Broker 能够接收的最大消息大小，默认的 1000012 太少了，不到 1MB，线上环境可以设置大些。
+
+### Topic 级别参数
+
+同样的配置Topic 级别参数会覆盖全局 Broker 参数的值，而每个 Topic 都能设置自己的参数值，这就是所谓的 Topic 级别参数。
+
+- **retention.ms**：规定了该 Topic 消息被保存的时长。默认是 7 天，即该 Topic 只保存最近 7 天的消息。一旦设置了这个值，它会覆盖掉 Broker 端的全局参数值。
+
+- **retention.bytes**：规定了要为该 Topic 预留多大的磁盘空间。和全局参数作用相似，这个值通常在多租户的 Kafka 集群中会有用武之地。当前默认值是 -1，表示可以无限使用磁盘空间。
+
+- **max.message.bytes**：决定了 Kafka Broker 能够正常接收该 Topic 的最大消息大小。我知道目前在很多公司都把 Kafka 作为一个基础架构组件来运行，上面跑了很多的业务数据。如果在全局层面上，我们不好给出一个合适的最大消息值，那么不同业务部门可自行设定这个 Topic 级别参数。
+
+**设置topic参数**：
+
+- 创建 topic 时设置：
+
+```bash
+bin/kafka-topics.sh --bootstrap-server localhost:9092 --create --topic transaction --partitions 1 --replication-factor 1 --config retention.ms=15552000000 --config max.message.bytes=5242880
+```
+
+- 修改现有 topic 参数(推荐)：
+
+```bash
+bin/kafka-configs.sh --zookeeper localhost:2181 --entity-type topics --entity-name transaction --alter --add-config max.message.bytes=10485760
+```
+
+
+
+### JVM参数
+
+- 堆内存：默认 1G，推荐 6G
+- GC
+  - 如果使用 Java 8，推荐使用 G1 收集器。在没有任何调优的情况下，G1 表现得要比 CMS 出色，主要体现在更少的 Full GC，需要调整的参数更少等，所以使用 G1 就好了。
+
+kafka中设置：
+
+- `KAFKA_HEAP_OPTS`：指定堆大小。
+
+- `KAFKA_JVM_PERFORMANCE_OPTS`：指定 GC 参数。
+
+比如：
+
+```shell
+$ export KAFKA_HEAP_OPTS=--Xms6g  --Xmx6g
+$ export KAFKA_JVM_PERFORMANCE_OPTS= -server -XX:+UseG1GC -XX:MaxGCPauseMillis=20 -XX:InitiatingHeapOccupancyPercent=35 -XX:+ExplicitGCInvokesConcurrent -Djava.awt.headless=true
+$ bin/kafka-server-start.sh config/server.properties
+```
+
+### 操作系统参数
+
+通常情况下，Kafka 并不需要设置太多的 OS 参数，但有些因素最好还是关注一下，比如下面这几个：
+
+- 文件描述符限制
+  - ulimit -n。文件描述符系统资源并不昂贵，不用太担心调大此值会有什么不利的影响。通常情况下将它设置成一个超大的值是合理的做法，比如ulimit -n 1000000。
+- 文件系统类型
+  - 推荐 xfs 或者更好的 zfs
+- Swappiness
+  - 建议将 swappniess 配置成一个接近 0 但不为 0 的值，比如 1。
+- 提交时间（Flush 落盘时间）
+  - 向 Kafka 发送数据并不是真要等数据被写入磁盘才会认为成功，而是只要数据被写入到操作系统的页缓存（Page Cache）上就可以了，随后操作系统根据 LRU 算法会定期将页缓存上的“脏”数据落盘到物理磁盘上。这个定期就是由提交时间来确定的，默认是 5 秒。
+
+
+
+
+
+
 
 
 
